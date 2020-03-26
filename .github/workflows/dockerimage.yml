@@ -11,7 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag morkot/mtr:latest
+      run: docker build . --file Dockerfile --tag morkot/aws-cli:latest
     
     - name: Logon to Dockerhub
       env:
