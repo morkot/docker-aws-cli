@@ -1,0 +1,33 @@
+name: Docker Image CI
+
+on: [push]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag morkot/mtr:latest
+    
+    - name: Logon to Dockerhub
+      env:
+        DOCKERHUB_PASSWORD: ${{ secrets. DOCKERHUB_PASSWORD}}
+        DOCKERHUB_USERNAME: ${{ secrets. DOCKERHUB_USERNAME}}
+      run: docker login --username morkot --password ${DOCKERHUB_PASSWORD}
+    
+    - name: Push the Docker image
+      run: docker push morkot/aws-cli:latest
+    
+    - name: Docker Hub Description
+      uses: peter-evans/dockerhub-description@v2.1.0
+      env:
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        DOCKERHUB_REPOSITORY: morkot/aws-cli
+    
+    - name: Clean docker creds and stuff
+      run: rm -rf /home/runner/.docker/
