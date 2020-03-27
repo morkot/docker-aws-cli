@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+log() {
+  level="$1"
+  shift
+  message="$@"
+  echo "[$level] $message"
+}
+
 set_s3_conf() {
   param_list="max_concurrent_requests 
   max_queue_size
@@ -15,10 +22,27 @@ set_s3_conf() {
     cmd="$cmd_prefix$param"
     param_upper=$(echo "$param" | tr '[:lower:]' '[:upper:]')
     env_var_name="$env_var_prefix$param_upper"
-    [ -n "${!env_var_name}" ] && eval "$cmd ${!env_var_name}"
+    if [ -n "${!env_var_name}" ]; then
+      log "INFO" "Setting aws s3 cli parameter: $cmd"
+      eval "$cmd ${!env_var_name}"
+    fi
   done
 }
 
-set_s3_conf
+assume_iam_role() {
+  if [ -n "${AWS_CLI_ASSUME_ROLE_ARN}" ]; then
+    log "INFO" "Assuming role: $AWS_CLI_ASSUME_ROLE_ARN"
+    assume_json=$(aws sts assume-role --role-arn "$AWS_CLI_ASSUME_ROLE_ARN" \
+                                      --role-session-name "assumed_by_docker_aws_cli")
+    
+    export AWS_ACCESS_KEY_ID=$(echo "$assume_json" | jq --raw-output '.Credentials.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY=$(echo "$assume_json" | jq --raw-output '.Credentials.SecretAccessKey') 
+    export AWS_SESSION_TOKEN=$(echo "$assume_json" | jq --raw-output '.Credentials.SessionToken')
+  fi
+}
 
+set_s3_conf
+assume_iam_role
+
+log "INFO" "Running command ${@}"
 exec "${@}"
