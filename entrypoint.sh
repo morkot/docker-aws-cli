@@ -44,5 +44,10 @@ assume_iam_role() {
 set_s3_conf
 assume_iam_role
 
-log "INFO" "Running command ${@}"
-exec "${@}"
+log "INFO" "Running command <${@}>"
+trap 'log "ERROR" "Command <${@}> has stopped with error code $?" && exit' ERR
+trap 'log "ERROR" "Command <${@}> has been stopped" && exit' SIGHUP SIGINT SIGQUIT SIGTERM
+
+${@}
+
+log "INFO" "Command <${@}> has finished" && exit
