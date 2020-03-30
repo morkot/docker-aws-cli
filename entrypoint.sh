@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 log() {
   level="$1"
   shift
@@ -41,13 +43,27 @@ assume_iam_role() {
   fi
 }
 
+term_handler() {
+  #
+  # Handle SIGTERM signal sent by `docker stop`
+  #
+  if [ $pid -ne 0 ]; then
+    kill -SIGTERM "$pid"
+    wait "$pid"
+  fi
+  exit 143; # 128 + 15 -- SIGTERM
+}
+
 set_s3_conf
 assume_iam_role
 
 log "INFO" "Running command <${@}>"
-trap 'log "ERROR" "Command <${@}> has stopped with error code $?" && exit' ERR
-trap 'log "ERROR" "Command <${@}> has been stopped" && exit' SIGHUP SIGINT SIGQUIT SIGTERM
 
-${@}
+trap 'log "ERROR" "Command <${@}> has stopped with error code $?"' ERR
+trap 'log "ERROR" "Command <${@}> has been stopped" && kill ${!}; term_handler' SIGTERM
 
-log "INFO" "Command <${@}> has finished" && exit
+${@} &
+pid="$!"
+wait $pid
+
+log "INFO" "Command <${@}> has finished successfully"
