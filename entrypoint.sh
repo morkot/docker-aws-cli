@@ -32,10 +32,12 @@ set_s3_conf() {
 }
 
 assume_iam_role() {
+  duration=${AWS_CLI_ASSUME_ROLE_DURATION:-3600}
   if [ -n "${AWS_CLI_ASSUME_ROLE_ARN}" ]; then
     log "INFO" "Assuming role: $AWS_CLI_ASSUME_ROLE_ARN"
     assume_json=$(aws sts assume-role --role-arn "$AWS_CLI_ASSUME_ROLE_ARN" \
-                                      --role-session-name "assumed_by_docker_aws_cli")
+                                      --role-session-name "assumed_by_docker_aws_cli"\
+                                      --duration-seconds "$duration")
     
     export AWS_ACCESS_KEY_ID=$(echo "$assume_json" | jq --raw-output '.Credentials.AccessKeyId')
     export AWS_SECRET_ACCESS_KEY=$(echo "$assume_json" | jq --raw-output '.Credentials.SecretAccessKey') 
@@ -46,6 +48,7 @@ assume_iam_role() {
 term_handler() {
   #
   # Handle SIGTERM signal sent by `docker stop`
+  # https://medium.com/@gchudnov/trapping-signals-in-docker-containers-7a57fdda7d86
   #
   if [ $pid -ne 0 ]; then
     kill -SIGTERM "$pid"
