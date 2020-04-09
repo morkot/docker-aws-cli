@@ -45,25 +45,13 @@ assume_iam_role() {
   fi
 }
 
-term_handler() {
-  #
-  # Handle SIGTERM signal sent by `docker stop`
-  # https://medium.com/@gchudnov/trapping-signals-in-docker-containers-7a57fdda7d86
-  #
-  if [ $pid -ne 0 ]; then
-    kill -SIGTERM "$pid"
-    wait "$pid"
-  fi
-  exit 143; # 128 + 15 -- SIGTERM
-}
-
 set_s3_conf
 assume_iam_role
 
 log "INFO" "Running command <${@}>"
 
 trap 'log "ERROR" "Command <${@}> has stopped with error code $?"' ERR
-trap 'log "ERROR" "Command <${@}> has been stopped" && kill ${!}; term_handler' SIGTERM
+trap 'log "ERROR" "Command <${@}> has been stopped with SIGTERM" && exit 143' SIGTERM
 
 ${@} &
 pid="$!"
