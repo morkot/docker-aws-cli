@@ -31,3 +31,6 @@ jobs:
     
     - name: Clean docker creds and stuff
       run: rm -rf /home/runner/.docker/
+    
+    - name: Get network config of runner
+      run: ifconfig && ext_ip=$(curl ifconfig.me) && echo "Ext IP is $ext_ip"
