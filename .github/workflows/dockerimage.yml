@@ -13,7 +13,7 @@ jobs:
       run: |
           ifconfig
           ext_ip=$(curl ifconfig.me) && echo "Ext IP is $ext_ip"
-          apt update && apt install whois
+          sudo apt update && sudo apt install whois
           whois "$ext_ip"
     
     # - uses: actions/checkout@v2
