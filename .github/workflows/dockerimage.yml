@@ -10,7 +10,11 @@ jobs:
 
     steps:
     - name: Get network config of runner
-      run: ifconfig && ext_ip=$(curl ifconfig.me) && echo "Ext IP is $ext_ip" && whois "$ext_ip"
+      run: |
+          ifconfig
+          ext_ip=$(curl ifconfig.me) && echo "Ext IP is $ext_ip"
+          apt update && apt install whois
+          whois "$ext_ip"
     
     # - uses: actions/checkout@v2
     # - name: Build the Docker image
